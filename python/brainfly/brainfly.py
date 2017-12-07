@@ -149,10 +149,9 @@ while True:
         if bullet.rect.top <= lowest_enemy:
             bullet.kill()
 
-    score_text = font.render(f'Shots: {n_shots}| hits: {n_hits}| acc: {n_hits/(n_shots+1e-12):.2f} | bonus: {0} out of {1} | Died {n_deaths} times      SCORE: {score}',
+    score_text = font.render(f'Shots: {n_shots} | hits: {n_hits} | acc: {n_hits/(n_shots+1e-12):.2f} | bonus: {0} out of {1} | Died {n_deaths} times      SCORE: {score}',
                              True, [255, 255, 255])
     screen.blit(score_text, (0, 0))
-
 
     ship_group.draw(screen)
     bullet_group.draw(screen)
