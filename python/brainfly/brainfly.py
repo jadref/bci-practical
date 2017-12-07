@@ -14,8 +14,10 @@ ENEMY_MAX_SIZE = 0.5
 ENEMY_ALIVE_TIME = 9
 ENEMY_SPAWN_TIME = ENEMY_ALIVE_TIME / 2
 ENEMY_SPEED = 1 / ENEMY_ALIVE_TIME
+GAME_TIME = 90
 
 PLAYER_SPEED = 0.3
+BULLET_SPEED = 0.8
 
 screen = pygame.display.set_mode(RESOLUTION, DOUBLEBUF | NOFRAME)
 screen_rect = screen.get_rect()
@@ -23,8 +25,23 @@ screen_rect = np.array([screen_rect.w, screen_rect.h])
 clock = pygame.time.Clock()
 keys = defaultdict(bool)
 
+
 def intlist(array):
     return np.around(array).astype(int).tolist()
+
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x):
+        super().__init__()
+        self.image = pygame.Surface(intlist(screen_rect[1] * np.array([0.03, 0.03])))
+        self.image.fill([0, 255, 0])
+        self.rect = self.image.get_rect()
+        self.position = np.array([x, 0.95])
+
+    def update(self, deltatime):
+        self.position[1] -= deltatime * BULLET_SPEED
+        self.rect.center = intlist(self.position * screen_rect)
+
 
 class EnemySprite(pygame.sprite.Sprite):
     GROWTH_RATE = (ENEMY_MAX_SIZE / ENEMY_MIN_SIZE)**(1/ENEMY_ALIVE_TIME)
@@ -37,7 +54,8 @@ class EnemySprite(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, intlist(self.scale*screen_rect))
         self.image = pygame.transform.rotate(self.image, 180)
         self.original_image = self.image
-        xpos = (0.0 + self.scale[0]*0.5) if left else (1 - self.scale[0] * 0.5)
+        r = np.random.uniform(0.8, 0.93)
+        xpos = 1 - r if left else r
         self.position = np.array([xpos, 0.0])
         self.spawntime = time.time()
     
@@ -46,21 +64,21 @@ class EnemySprite(pygame.sprite.Sprite):
         time_elapsed = time.time() - self.spawntime
         scale = self.scale * self.GROWTH_RATE**time_elapsed
         self.image = pygame.transform.scale(self.original_image, intlist(scale*screen_rect))
-        self.position[0] = ENEMY_MIN_SIZE / 2 * self.GROWTH_RATE**time_elapsed
-        if not self.left:
-            self.position[0] = 1- self.position[0]
+        # self.position[0] = ENEMY_MIN_SIZE / 2 * self.GROWTH_RATE**time_elapsed
+        # if not self.left:
+        #     self.position[0] = 1 - self.position[0]
         self.rect = self.image.get_rect()
         self.rect.center = intlist(self.position * screen_rect)
-        if self.rect.bottom > RESOLUTION[1]:
-            self.kill()
+        self.rect.bottom = intlist(self.position * screen_rect)[1]
+
 
 class ShipSprite(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load('ship.png')
         self.scale = np.array([0.1, 0.1])
-        self.image = pygame.transform.scale(self.image, intlist(self.scale*screen_rect))
-        self.position = np.array([0.5, 1]) - self.scale * 0.5
+        self.image = pygame.transform.scale(self.image, intlist(self.scale*screen_rect[0]))
+        self.position = np.array([0.5, 0.94])
 
     def update(self, deltatime, keys):
         if keys[K_RIGHT]:
@@ -70,13 +88,25 @@ class ShipSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = intlist(self.position * screen_rect)
 
+
+def draw_enemies(enemies, screen):
+    for enemy in enemies:
+        pygame.draw.line(screen, [155, 10, 10], [0, enemy.rect.center[1]], [screen_rect[0], enemy.rect.center[1]], 3)
+    enemies.draw(screen)
+
+
+score = n_shots = n_deaths = n_hits = 0
+
 rect = screen.get_rect()
 ship = ShipSprite()
 ship_group = pygame.sprite.RenderPlain(ship)
 enemy_group = pygame.sprite.RenderPlain()
+bullet_group = pygame.sprite.RenderPlain()
 last_enemy_spawned = -ENEMY_SPAWN_TIME
 left = True
-lasttime = time.time()
+pygame.init()
+font = pygame.font.Font(pygame.font.get_default_font(), 16)
+lasttime = last_bullet_spawned = game_start_time = time.time()
 while True:
     clock.tick(60)
     curtime = time.time()
@@ -96,9 +126,37 @@ while True:
         left = not left
         last_enemy_spawned = curtime
 
-    rect = screen.get_rect()
+    if curtime - last_bullet_spawned > 1:
+        last_bullet_spawned = curtime
+        n_shots += 1
+        bullet_group.add(Bullet(ship.position[0]))
     enemy_group.update(deltatime)
     ship_group.update(deltatime, keys)
+    bullet_group.update(deltatime)
+
+    for enemy in enemy_group:
+        if enemy.rect.bottom > screen_rect[1]:
+            enemy.kill()
+            n_deaths += 1
+
+    collisions = pygame.sprite.groupcollide(bullet_group, enemy_group, True, True)
+    for k, v in collisions.items():
+        n_hits += 1
+        score += int(round(10 * (screen_rect[1] - k.rect.center[1]) / screen_rect[1] + 1))
+
+    lowest_enemy = max(e.rect.center[1] for e in enemy_group) if enemy_group else 0
+    for bullet in bullet_group:
+        if bullet.rect.top <= lowest_enemy:
+            bullet.kill()
+
+    score_text = font.render(f'Shots: {n_shots}| hits: {n_hits}| acc: {n_hits/(n_shots+1e-12):.2f} | bonus: {0} out of {1} | Died {n_deaths} times      SCORE: {score}',
+                             True, [255, 255, 255])
+    screen.blit(score_text, (0, 0))
+
+
     ship_group.draw(screen)
-    enemy_group.draw(screen)
+    bullet_group.draw(screen)
+    draw_enemies(enemy_group, screen)
     pygame.display.flip()
+    if game_start_time + GAME_TIME < curtime:
+        sys.exit()
