@@ -1,10 +1,14 @@
 from collections import defaultdict
 import sys
+sys.path.append('../signalProc')
+import bufhelp
 import time
 
 import numpy as np
 import pygame
 from pygame.locals import *
+
+from util import intlist
 
 RESOLUTION = (960, 600)
 BACKGROUND_COLOR = (42, 42, 42)
@@ -24,10 +28,7 @@ screen_rect = screen.get_rect()
 screen_rect = np.array([screen_rect.w, screen_rect.h])
 clock = pygame.time.Clock()
 keys = defaultdict(bool)
-
-
-def intlist(array):
-    return np.around(array).astype(int).tolist()
+# bufhelp.connect()
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -107,6 +108,7 @@ left = True
 pygame.init()
 font = pygame.font.Font(pygame.font.get_default_font(), 16)
 lasttime = last_bullet_spawned = game_start_time = time.time()
+# bufhelp.sendEvent('experiment.im', 'start')
 while True:
     clock.tick(60)
     curtime = time.time()
