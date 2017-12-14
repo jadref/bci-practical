@@ -1,14 +1,8 @@
 # Imports
 import sys
-import os
 import pickle
 
-try:
-    pydir = os.path.dirname(__file__)
-except ImportError:
-    pydir = os.getcwd()
-
-sys.path.append(os.path.join(os.path.abspath(pydir), '../../signalProc'))
+sys.path.append('../../signalProc/')
 import bufhelp
 import h5py
 
