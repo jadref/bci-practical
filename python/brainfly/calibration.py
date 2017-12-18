@@ -16,6 +16,7 @@ ELLIPSIS = np.array([0.2, 0.15])
 BACKGROUND_COLOR = (42, 42, 42)
 GAME_TIME = 90
 EPOCH_DURATION = 3
+JUMP_DURATION = 0.5
 
 
 class Ellipse:
@@ -42,17 +43,19 @@ font = pygame.font.Font(pygame.font.get_default_font(), int(screen_rect[1]*0.05)
 clock = pygame.time.Clock()
 keys = defaultdict(bool)
 
-lasttime = last_swap = time.time()
+lasttime = last_swap = last_jump = time.time()
 sides = ['L', 'R']*20
 left = Ellipse([0.1, 0.5], [0.2, 0.15], text='LH')
 right = Ellipse([0.9, 0.5], [0.2, 0.15], text='RH')
 middle = Ellipse([0.5, 0.5], [0.1, 0.1])
+
 i = 0
 while True:
     clock.tick(60)
     curtime = time.time()
     deltatime = curtime - lasttime
     lasttime = curtime
+
     for event in pygame.event.get():
         if not hasattr(event, 'key'): continue
         down = event.type == KEYDOWN
@@ -70,6 +73,12 @@ while True:
             left.color = [100, 100, 100]
             right.color = [0, 255, 0]
     screen.fill(BACKGROUND_COLOR)
+
+    if curtime - last_jump >= JUMP_DURATION:
+        last_jump = curtime
+        middle = Ellipse([0.5 + np.random.normal(0, 0.01),
+                          0.5 + np.random.normal(0, 0.01)]
+                         , [0.1, 0.1])
 
     left.draw(screen)
     right.draw(screen)

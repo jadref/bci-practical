@@ -18,8 +18,8 @@ data, events, stopevents = bufhelp.gatherdata("stimulus.target",
                                               trlen_ms,
                                               ("stimulus.training", "end"),
                                               milliseconds=True)
-pickle.dump({"events": events,
-             "data": data,
+pickle.dump({'events': events,
+             'data': data,
              'hdr': hdr
              }, open(dname+'.pk', 'wb')
             )
