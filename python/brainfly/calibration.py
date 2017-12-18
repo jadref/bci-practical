@@ -47,7 +47,7 @@ keys = defaultdict(bool)
 
 lasttime = last_swap = last_jump = stim_end_time = time.time()
 in_epoch = False
-sides = ['L', 'R']*20
+sides = [''] + ['L', 'R']*20
 left = Ellipse([0.1, 0.5], [0.2, 0.15], text='LH')
 right = Ellipse([0.9, 0.5], [0.2, 0.15], text='RH')
 middle = Ellipse([0.5, 0.5], [0.1, 0.1])
@@ -68,7 +68,7 @@ while True:
     if not in_epoch and curtime - stim_end_time >= BETWEEN_DURATION:
         i += 1
         last_swap = curtime
-        if i == len(sides):
+        if i == len(sides)-1:
             sys.exit()
         if sides[i] == 'L':
             left.color = (119, 221, 119)
@@ -96,6 +96,7 @@ while True:
     left.draw(screen)
     right.draw(screen)
     middle.draw(screen)
-
+    progress_text = font.render(f'{i}/{len(sides)-1}', True, [255, 255, 255])
+    screen.blit(progress_text, [0, 0])
 
     pygame.display.flip()
