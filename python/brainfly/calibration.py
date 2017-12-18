@@ -20,7 +20,7 @@ EPOCH_DURATION = 3
 
 class Ellipse:
 
-    def __init__(self, position, size, color=[100, 100, 100], text=''):
+    def __init__(self, position, size, color=(100, 100, 100), text=''):
         self.position = np.array(position)
         self.size = np.array(size) * screen_rect[1]
         self.text = text
