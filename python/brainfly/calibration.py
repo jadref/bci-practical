@@ -17,6 +17,7 @@ BACKGROUND_COLOR = (42, 42, 42)
 GAME_TIME = 90
 JUMP_DURATION = 0.5
 EPOCH_DURATION = 4.5
+BETWEEN_DURATION = 1.5
 
 
 class Ellipse:
@@ -26,12 +27,13 @@ class Ellipse:
         self.size = np.array(size) * screen_rect[1]
         self.text = text
         self.color = color
+        self.offset = np.zeros(2)
 
     def draw(self, screen):
-        rect = intlist(np.concatenate([self.position*screen_rect-self.size/2, self.size]))
+        rect = intlist(np.concatenate([(self.position+self.offset)*screen_rect-self.size/2, self.size]))
         pygame.draw.ellipse(screen, self.color, rect)
         text = font.render(self.text, True, [255, 255, 255])
-        screen.blit(text, (rect[0]+text.get_rect().w, rect[1]+text.get_rect().h))
+        screen.blit(text, intlist(self.position*screen_rect-1/6*self.size))
 
 
 screen = pygame.display.set_mode(RESOLUTION, DOUBLEBUF | NOFRAME)
@@ -43,7 +45,8 @@ font = pygame.font.Font(pygame.font.get_default_font(), int(screen_rect[1]*0.05)
 clock = pygame.time.Clock()
 keys = defaultdict(bool)
 
-lasttime = last_swap = last_jump = time.time()
+lasttime = last_swap = last_jump = stim_end_time = time.time()
+in_epoch = False
 sides = ['L', 'R']*20
 left = Ellipse([0.1, 0.5], [0.2, 0.15], text='LH')
 right = Ellipse([0.9, 0.5], [0.2, 0.15], text='RH')
@@ -62,24 +65,33 @@ while True:
         if event.type == QUIT or keys[K_ESCAPE]:
             sys.exit()
 
-    if curtime - last_swap >= EPOCH_DURATION:
+    if not in_epoch and curtime - stim_end_time >= BETWEEN_DURATION:
         i += 1
+        last_swap = curtime
         if i == len(sides):
             sys.exit()
-        last_swap = curtime
         if sides[i] == 'L':
-            left.color = [0, 255, 0]
-            right.color = [100, 100, 100]
+            left.color = (119, 221, 119)
+            right.color = (100, 100, 100)
+            middle.text = 'LH'
         else:
-            left.color = [100, 100, 100]
-            right.color = [0, 255, 0]
+            left.color = (100, 100, 100)
+            right.color = (119, 221, 119)
+            middle.text = 'RH'
+        middle.color = (119, 221, 119)
+        in_epoch = True
+
+    if in_epoch and curtime - last_swap >= EPOCH_DURATION:
+        middle.text = ''
+        left.color = right.color = (100, 100, 100)
+        middle.color = (255, 105, 97)
+        stim_end_time = curtime
+        in_epoch = False
     screen.fill(BACKGROUND_COLOR)
 
     if curtime - last_jump >= JUMP_DURATION:
         last_jump = curtime
-        middle = Ellipse([0.5 + np.random.normal(0, 0.01),
-                          0.5 + np.random.normal(0, 0.01)]
-                         , [0.1, 0.1])
+        middle.offset = np.random.normal(0, 0.005, 2)
 
     left.draw(screen)
     right.draw(screen)
