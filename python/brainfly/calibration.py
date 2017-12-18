@@ -64,6 +64,8 @@ while True:
 
     if curtime - last_swap >= EPOCH_DURATION:
         i += 1
+        if i == len(sides):
+            sys.exit()
         last_swap = curtime
         if sides[i] == 'L':
             left.color = [0, 255, 0]
@@ -85,5 +87,3 @@ while True:
 
 
     pygame.display.flip()
-    if i == len(sides):
-        sys.exit()
