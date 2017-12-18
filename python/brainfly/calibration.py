@@ -15,8 +15,8 @@ RESOLUTION = (960, 600)
 ELLIPSIS = np.array([0.2, 0.15])
 BACKGROUND_COLOR = (42, 42, 42)
 GAME_TIME = 90
-EPOCH_DURATION = 3
 JUMP_DURATION = 0.5
+EPOCH_DURATION = 4.5
 
 
 class Ellipse:
@@ -48,7 +48,6 @@ sides = ['L', 'R']*20
 left = Ellipse([0.1, 0.5], [0.2, 0.15], text='LH')
 right = Ellipse([0.9, 0.5], [0.2, 0.15], text='RH')
 middle = Ellipse([0.5, 0.5], [0.1, 0.1])
-
 i = 0
 while True:
     clock.tick(60)
