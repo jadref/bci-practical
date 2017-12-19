@@ -41,7 +41,7 @@ pygame.init()
 screen_rect = screen.get_rect()
 screen_rect = np.array([screen_rect.w, screen_rect.h])
 font = pygame.font.Font(pygame.font.get_default_font(), int(screen_rect[1]*0.05))
-# bufhelp.connect()
+bufhelp.connect()
 clock = pygame.time.Clock()
 keys = defaultdict(bool)
 
@@ -52,6 +52,7 @@ left = Ellipse([0.1, 0.5], [0.2, 0.15], text='LH')
 right = Ellipse([0.9, 0.5], [0.2, 0.15], text='RH')
 middle = Ellipse([0.5, 0.5], [0.1, 0.1])
 i = 0
+bufhelp.sendEvent('stimulus.training', 'start')
 while True:
     clock.tick(60)
     curtime = time.time()
@@ -69,6 +70,7 @@ while True:
         i += 1
         last_swap = curtime
         if i == len(sides)-1:
+            bufhelp.sendEvent('stimulus.training', 'end')
             sys.exit()
         if sides[i] == 'L':
             left.color = (119, 221, 119)
@@ -79,6 +81,8 @@ while True:
             right.color = (119, 221, 119)
             middle.text = 'RH'
         middle.color = (119, 221, 119)
+
+        bufhelp.sendEvent('stimulus.target', 1 if sides[i] == 'R' else 0)
         in_epoch = True
 
     if in_epoch and curtime - last_swap >= EPOCH_DURATION:
