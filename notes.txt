@@ -1,0 +1,24 @@
+IM task Matlab 
+
+train acc: 54.5
+c feedback: 21/19
+train acc: 55?
+acc: 8.1 %
+hits: 7
+score: 28
+
+
+Movement task Matlab
+
+train acc: 54.5
+c feedback: 22/18
+train acc na cf: 55 
+acc: 12.8%
+hits: 11
+score: 72
+
+Ondanks dat de score veel beter is in de tweede sessie, 
+zijn we er niet van overtuigd dat hier de taak daadwerkelijk beter ging.
+De hogere score is onder ander gehaald doordat de speler gedurende een lange
+tijd aan een kant van het scherm bevond. Hierdoor werden schepen die net 
+gespawned wered vrij snel geraakt. 

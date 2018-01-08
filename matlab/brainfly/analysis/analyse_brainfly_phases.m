@@ -63,12 +63,12 @@ for si=1:numel(datasets);
            continue;
         end
 
-        fprintf('Trying: %s %s\n',subj,alg);
+        fprintf('Trying: %s %s\n',subj,alg);cal
         %try; % run in catch so 1 bad alg doesn't stop everything
 
           % train on the calibrate phase & test on the rest
           calphasei = strcmp({phases.label},'calibrate');
-          if( ~any(calphasei) )
+          if( ~any(calphasei) )cal
             calphasei=1;
           else
             calphasei=find(calphasei); calphasei=calphasei(1);
@@ -91,7 +91,7 @@ for si=1:numel(datasets);
               % apply the trained classifier
              [ans,f] = buffer_apply_clsfr(d.data,clsfr); % predictions
              y = lab2ind({d.devents.value},clsfr.spKey,clsfr.spMx); %map events->clsfr targets
-             conf    = dv2conf(y,f); % confusion matrix
+          kk   conf    = dv2conf(y,f); % confusion matrix
              tst     = conf2loss(conf,'bal'); % performance
              auc     = dv2auc(y,f); % auc -scor
              if(phasei==calphasei);
