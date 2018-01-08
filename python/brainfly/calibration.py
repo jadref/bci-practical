@@ -18,6 +18,11 @@ GAME_TIME = 90
 JUMP_DURATION = 0.5
 EPOCH_DURATION = 4.5
 BETWEEN_DURATION = 1.5
+PAUSE_TIME = 16
+
+
+def lerp(current, goal, t):
+    return current + (goal - current) * t
 
 
 class Ellipse:
@@ -33,7 +38,8 @@ class Ellipse:
         rect = intlist(np.concatenate([(self.position+self.offset)*screen_rect-self.size/2, self.size]))
         pygame.draw.ellipse(screen, self.color, rect)
         text = font.render(self.text, True, [255, 255, 255])
-        screen.blit(text, intlist(self.position*screen_rect-1/6*self.size))
+        text_x, text_y = intlist(self.position*screen_rect)
+        screen.blit(text, [text_x - text.get_rect().width//2, text_y - text.get_rect().height//2])
 
 
 screen = pygame.display.set_mode(RESOLUTION, DOUBLEBUF | NOFRAME)
@@ -53,6 +59,7 @@ right = Ellipse([0.9, 0.5], [0.2, 0.15], text='RH')
 middle = Ellipse([0.5, 0.5], [0.1, 0.1])
 i = 0
 bufhelp.sendEvent('stimulus.training', 'start')
+middle_offset_goal = middle_start_pos = 0
 while True:
     clock.tick(60)
     curtime = time.time()
@@ -68,6 +75,14 @@ while True:
 
     if not in_epoch and curtime - stim_end_time >= BETWEEN_DURATION:
         i += 1
+        if i % PAUSE_TIME == 0:
+            pause_text = font.render('Break time! Press any key when you are ready to continue', True, [255, 255, 255])
+            center_x, center_y = screen.get_rect().center
+            text_width, text_height = pause_text.get_rect().size
+            screen.blit(pause_text, [center_x-text_width//2, center_y-text_height//2])
+            pygame.display.flip()
+            while not (pygame.event.wait() or any(hasattr(e, 'key') for e in pygame.event.get())):
+                time.sleep(0.1)
         last_swap = curtime
         if i == len(sides)-1:
             bufhelp.sendEvent('stimulus.training', 'end')
@@ -95,7 +110,10 @@ while True:
 
     if curtime - last_jump >= JUMP_DURATION:
         last_jump = curtime
-        middle.offset = np.random.normal(0, 0.005, 2)
+        middle_offset_goal = np.random.normal(0, 0.005, 2)
+        middle_start_pos = middle.offset
+
+    middle.offset = lerp(middle_start_pos, middle_offset_goal, (curtime - last_jump) / JUMP_DURATION)
 
     left.draw(screen)
     right.draw(screen)
