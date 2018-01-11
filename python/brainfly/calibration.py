@@ -9,7 +9,7 @@ import pygame
 from pygame.locals import *
 
 import bufhelp
-from util import intlist
+from util import intlist, lerp
 
 RESOLUTION = (960, 600)
 ELLIPSIS = np.array([0.2, 0.15])
@@ -19,10 +19,6 @@ JUMP_DURATION = 0.5
 EPOCH_DURATION = 4.5
 BETWEEN_DURATION = 1.5
 PAUSE_TIME = 16
-
-
-def lerp(current, goal, t):
-    return current + (goal - current) * t
 
 
 class Ellipse:

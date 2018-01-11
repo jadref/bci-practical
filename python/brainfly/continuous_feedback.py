@@ -1,5 +1,6 @@
 from collections import defaultdict
 import sys
+
 sys.path.append('../signalProc')
 import bufhelp
 import time
@@ -45,26 +46,26 @@ class Bullet(pygame.sprite.Sprite):
 
 
 class EnemySprite(pygame.sprite.Sprite):
-    GROWTH_RATE = (ENEMY_MAX_SIZE / ENEMY_MIN_SIZE)**(1/ENEMY_ALIVE_TIME)
+    GROWTH_RATE = (ENEMY_MAX_SIZE / ENEMY_MIN_SIZE) ** (1 / ENEMY_ALIVE_TIME)
 
     def __init__(self, left=True):
         super().__init__()
         self.image = pygame.image.load('ship.png')
         self.left = left
         self.scale = np.array([ENEMY_MIN_SIZE, ENEMY_MIN_SIZE])
-        self.image = pygame.transform.scale(self.image, intlist(self.scale*screen_rect))
+        self.image = pygame.transform.scale(self.image, intlist(self.scale * screen_rect))
         self.image = pygame.transform.rotate(self.image, 180)
         self.original_image = self.image
         r = np.random.uniform(0.8, 0.93)
         xpos = 1 - r if left else r
         self.position = np.array([xpos, 0.0])
         self.spawntime = time.time()
-    
+
     def update(self, deltatime):
         self.position[1] += ENEMY_SPEED * deltatime
         time_elapsed = time.time() - self.spawntime
-        scale = self.scale * self.GROWTH_RATE**time_elapsed
-        self.image = pygame.transform.scale(self.original_image, intlist(scale*screen_rect))
+        scale = self.scale * self.GROWTH_RATE ** time_elapsed
+        self.image = pygame.transform.scale(self.original_image, intlist(scale * screen_rect))
         # self.position[0] = ENEMY_MIN_SIZE / 2 * self.GROWTH_RATE**time_elapsed
         # if not self.left:
         #     self.position[0] = 1 - self.position[0]
@@ -78,7 +79,7 @@ class ShipSprite(pygame.sprite.Sprite):
         super().__init__()
         self.image = pygame.image.load('ship.png')
         self.scale = np.array([0.1, 0.1])
-        self.image = pygame.transform.scale(self.image, intlist(self.scale*screen_rect[0]))
+        self.image = pygame.transform.scale(self.image, intlist(self.scale * screen_rect[0]))
         self.position = np.array([0.5, 0.94])
 
     def update(self, deltatime, keys):
@@ -151,8 +152,9 @@ while True:
         if bullet.rect.top <= lowest_enemy:
             bullet.kill()
 
-    score_text = font.render(f'Shots: {n_shots} | hits: {n_hits} | acc: {n_hits/(n_shots+1e-12):.2f} | bonus: {0} out of {1} | Died {n_deaths} times      SCORE: {score}',
-                             True, [255, 255, 255])
+    score_text = font.render(
+        f'Shots: {n_shots} | hits: {n_hits} | acc: {n_hits/(n_shots+1e-12):.2f} | bonus: {0} out of {1} | Died {n_deaths} times      SCORE: {score}',
+        True, [255, 255, 255])
     screen.blit(score_text, (0, 0))
 
     ship_group.draw(screen)
