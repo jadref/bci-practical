@@ -10,15 +10,17 @@ import pygame
 from pygame.locals import *
 
 from util import intlist
+from controller import PlayerController
 
 RESOLUTION = (960, 600)
 BACKGROUND_COLOR = (42, 42, 42)
 
 ENEMY_MIN_SIZE = 0.05
 ENEMY_MAX_SIZE = 0.5
-ENEMY_ALIVE_TIME = 9
+ENEMY_ALIVE_TIME = 18
 ENEMY_SPAWN_TIME = ENEMY_ALIVE_TIME / 2
 ENEMY_SPEED = 1 / ENEMY_ALIVE_TIME
+PREDICTION_TIME = 0.1
 GAME_TIME = 90
 
 PLAYER_SPEED = 0.3
@@ -99,12 +101,14 @@ def draw_enemies(enemies, screen):
 
 score = n_shots = n_deaths = n_hits = 0
 
+controller = PlayerController()
 rect = screen.get_rect()
 ship = ShipSprite()
 ship_group = pygame.sprite.RenderPlain(ship)
 enemy_group = pygame.sprite.RenderPlain()
 bullet_group = pygame.sprite.RenderPlain()
 last_enemy_spawned = -ENEMY_SPAWN_TIME
+last_pred_time = 0
 left = True
 pygame.init()
 font = pygame.font.Font(pygame.font.get_default_font(), 16)
@@ -130,6 +134,15 @@ while True:
         left = not left
         last_enemy_spawned = curtime
 
+    # TODO:
+    # 1. Hij pakt positie van laatst gespawnde, niet van onderste
+    if curtime - last_pred_time > PREDICTION_TIME:
+        p = np.random.uniform(0, 1)
+        p += 0.1 if left else -0.1
+        p = np.clip(p, 0, 1)
+        ship.position[0] = controller.move(p)
+        last_pred_time = curtime
+
     if curtime - last_bullet_spawned > 1:
         last_bullet_spawned = curtime
         n_shots += 1
@@ -138,16 +151,18 @@ while True:
     ship_group.update(deltatime, keys)
     bullet_group.update(deltatime)
 
+
     for enemy in enemy_group:
         if enemy.rect.bottom > screen_rect[1]:
             enemy.kill()
             n_deaths += 1
             ship.position[0] = 0.5
 
-    collisions = pygame.sprite.groupcollide(bullet_group, enemy_group, True, True)
+    collisions = pygame.sprite.groupcollide(bullet_group, enemy_group, True, False)
     for k, v in collisions.items():
         n_hits += 1
         score += int(round(10 * (screen_rect[1] - k.rect.center[1]) / screen_rect[1] + 1))
+        ship.position[0] = 0.5
 
     lowest_enemy = max(e.rect.center[1] for e in enemy_group) if enemy_group else 0
     for bullet in bullet_group:
@@ -155,7 +170,8 @@ while True:
             bullet.kill()
 
     score_text = font.render(
-        f'Shots: {n_shots} | hits: {n_hits} | acc: {n_hits/(n_shots+1e-12):.2f} | bonus: {0} out of {1} | Died {n_deaths} times      SCORE: {score}',
+        f'Shots: {n_shots} | hits: {n_hits} | acc: {n_hits/(n_shots+1e-12):.2f} | '
+        f'bonus: {0} out of {1} | Died {n_deaths} times      SCORE: {score}',
         True, [255, 255, 255])
     screen.blit(score_text, (0, 0))
 
