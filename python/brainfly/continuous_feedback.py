@@ -125,6 +125,7 @@ while True:
 
     # check if an enemy needs to spawn
     if curtime - last_enemy_spawned > ENEMY_SPAWN_TIME:
+        bufhelp.sendEvent('stimulus.target', int(not left))  # right is 1
         enemy_group.add(EnemySprite(left))
         left = not left
         last_enemy_spawned = curtime
@@ -141,6 +142,7 @@ while True:
         if enemy.rect.bottom > screen_rect[1]:
             enemy.kill()
             n_deaths += 1
+            ship.position[0] = 0.5
 
     collisions = pygame.sprite.groupcollide(bullet_group, enemy_group, True, True)
     for k, v in collisions.items():
