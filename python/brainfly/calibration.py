@@ -71,13 +71,13 @@ while True:
 
     if not in_epoch and curtime - stim_end_time >= BETWEEN_DURATION:
         i += 1
-        if i % PAUSE_TIME == 0:
+        if i % PAUSE_TIME == 1:
             pause_text = font.render('Break time! Press any key when you are ready to continue', True, [255, 255, 255])
             center_x, center_y = screen.get_rect().center
             text_width, text_height = pause_text.get_rect().size
             screen.blit(pause_text, [center_x-text_width//2, center_y-text_height//2])
             pygame.display.flip()
-            while not (pygame.event.wait() or any(hasattr(e, 'key') for e in pygame.event.get())):
+            while not any(hasattr(e, 'key') and e.type == KEYDOWN for e in pygame.event.get()):
                 time.sleep(0.1)
         last_swap = curtime
         if i == len(sides)-1:
