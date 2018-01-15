@@ -8,7 +8,8 @@ import numpy as np
 import pygame
 from pygame.locals import *
 
-from util import intlist
+from util import intlist, lerp
+from controller import PlayerController
 
 RESOLUTION = (960, 600)
 BACKGROUND_COLOR = (42, 42, 42)
@@ -18,6 +19,7 @@ ENEMY_MAX_SIZE = 0.5
 ENEMY_ALIVE_TIME = 9
 ENEMY_SPAWN_TIME = ENEMY_ALIVE_TIME / 2
 ENEMY_SPEED = 1 / ENEMY_ALIVE_TIME
+PREDICTION_TIME = 0.1
 GAME_TIME = 90
 
 PLAYER_SPEED = 0.3
@@ -101,9 +103,12 @@ score = n_shots = n_deaths = n_hits = 0
 rect = screen.get_rect()
 ship = ShipSprite()
 ship_group = pygame.sprite.RenderPlain(ship)
+controller = PlayerController(alpha=0.5*PREDICTION_TIME)
 enemy_group = pygame.sprite.RenderPlain()
 bullet_group = pygame.sprite.RenderPlain()
 last_enemy_spawned = -ENEMY_SPAWN_TIME
+ship_start_pos = 0
+last_pred_time = 0
 left = True
 pygame.init()
 font = pygame.font.Font(pygame.font.get_default_font(), 16)
@@ -128,6 +133,14 @@ while True:
         left = not left
         last_enemy_spawned = curtime
 
+    if curtime - last_pred_time > PREDICTION_TIME:
+        last_pred_time = curtime
+        events = bufhelp.buffer_newevents('classify.prediction', timeout_ms=0.01)
+        for event in events:
+            print(f'Got prediction event: {event.value}')
+            controller.move(event.value[0])
+        ship_start_pos = ship.position[0]
+
     if curtime - last_bullet_spawned > 1:
         last_bullet_spawned = curtime
         n_shots += 1
@@ -135,6 +148,8 @@ while True:
     enemy_group.update(deltatime)
     ship_group.update(deltatime, keys)
     bullet_group.update(deltatime)
+
+    ship.position[0] = lerp(ship_start_pos, controller.desired_position, (curtime - last_pred_time) / PREDICTION_TIME)
 
     for enemy in enemy_group:
         if enemy.rect.bottom > screen_rect[1]:
@@ -151,8 +166,10 @@ while True:
         if bullet.rect.top <= lowest_enemy:
             bullet.kill()
 
-    score_text = font.render(f'Shots: {n_shots} | hits: {n_hits} | acc: {n_hits/(n_shots+1e-12):.2f} | bonus: {0} out of {1} | Died {n_deaths} times      SCORE: {score}',
-                             True, [255, 255, 255])
+    score_text = font.render(
+        f'Shots: {n_shots} | hits: {n_hits} | acc: {n_hits/(n_shots+1e-12):.2f} '
+        f'| bonus: {0} out of {1} | Died {n_deaths} times      SCORE: {score}',
+        True, [255, 255, 255])
     screen.blit(score_text, (0, 0))
 
     ship_group.draw(screen)
