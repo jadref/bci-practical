@@ -14,7 +14,6 @@ from util import intlist, lerp
 RESOLUTION = (960, 600)
 ELLIPSIS = np.array([0.2, 0.15])
 BACKGROUND_COLOR = (42, 42, 42)
-GAME_TIME = 90
 JUMP_DURATION = 0.5
 EPOCH_DURATION = 4.5
 BETWEEN_DURATION = 1.5
@@ -80,7 +79,7 @@ while True:
             while not any(hasattr(e, 'key') and e.type == KEYDOWN for e in pygame.event.get()):
                 time.sleep(0.1)
         last_swap = curtime
-        if i == len(sides)-1:
+        if i == len(sides):
             bufhelp.sendEvent('stimulus.training', 'end')
             sys.exit()
         if sides[i] == 'L':
