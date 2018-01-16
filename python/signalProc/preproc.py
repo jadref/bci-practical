@@ -592,7 +592,7 @@ def badchannelremoval(data, badchannels = None, threshold = (-numpy.inf,3.1)):
     else:
         raise Exception("data should be a numpy array or list of numpy arrays.")
 
-def badtrailremoval(data, events = None, threshold = (None,3.1)):
+def badtrialremoval(data, events = None, threshold = (None,3.1)):
     '''Removes bad trails from the data.
     
     Removes bad trails from the data. Applies outlier detection on the rows

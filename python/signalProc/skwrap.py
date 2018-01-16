@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import scipy.stats
 import sklearn.grid_search
 import sklearn.cross_validation
@@ -62,10 +62,10 @@ def fit(data, events, classifier, mapping=dict(), params = None, folds = 5, shuf
     X = createdata(data, reducer)
 
     if shuffle:
-        numpy.random.shuffle(X)
+        np.random.shuffle(X)
 
     if events is not None:
-        if not isinstance(data,numpy.ndarray):
+        if not isinstance(data,np.ndarray):
             if reducer is not None:
                 Y,mapping = createclasses(events, 1, mapping)
             else:
@@ -104,8 +104,15 @@ def fit(data, events, classifier, mapping=dict(), params = None, folds = 5, shuf
         
     if Y is None:
         classifier.fit(X)
-    else:               
-        classifier.fit(X,Y)
+    else:
+        # Use leave-one-out to get an estimate of the accuracy
+        k_fold = sklearn.model_selection.KFold(X.shape[0]-1)
+        predictions = np.empty(len(X))
+        for train_idx, test_idx in k_fold.split(X, Y):
+            clf = classifier.fit(X[train_idx],Y[train_idx])
+            predictions[test_idx] = clf.predict(X[test_idx])
+        print(f'Leave-one-out Accuracy: {sklearn.metrics.accuracy_score(Y, predictions):.2f}')
+        classifier.fit(X, Y)
     
         
 def predict(data, classifier, mapping = None, reducerdata=None, reducerpred=None):
@@ -167,7 +174,7 @@ def predict(data, classifier, mapping = None, reducerdata=None, reducerpred=None
     if not (hasattr(classifier,"fit") and hasattr(classifier,"predict")):
         raise Exception("classifier should be a sklearn classifier.")
 
-    if isinstance(data,numpy.ndarray):
+    if isinstance(data,np.ndarray):
         if reducerpred is not None and reducerdata is not None:
             raise Exception("unable to reduce both data and predictions")
 
@@ -176,14 +183,14 @@ def predict(data, classifier, mapping = None, reducerdata=None, reducerpred=None
 
     if reducerpred is not None:
         if reducerpred == "mean":
-            pred = reduceArray(pred,data,numpy.mean)
+            pred = reduceArray(pred,data,np.mean)
             return pred
         elif reducerpred == "max":
             pred = reduceArray(pred,data,max)            
         elif reducerpred == "min":
             pred = reduceArray(pred,data,min)            
         elif reducerpred == "median":
-            pred = reduceArray(pred,data,numpy.median)            
+            pred = reduceArray(pred,data,np.median)            
         elif reducerpred == "mode":
             pred = reduceArray(pred,data,lambda x: scipy.stats.mode(x)[0][0])
         elif isinstance(reducerpred, collections.Callable):
@@ -194,7 +201,7 @@ def predict(data, classifier, mapping = None, reducerdata=None, reducerpred=None
     if mapping is None:
         return pred        
     elif isinstance(mapping,dict):
-        if not all([isinstance(x,numpy.ndarray) for x in data]):
+        if not all([isinstance(x,np.ndarray) for x in data]):
             raise Exception("data contains non numpy.array elements.")
         
         if not all([x.shape[1] == data[0].shape[1] for x in data]):
@@ -258,7 +265,7 @@ def predict_proba(data, classifier, reducerdata=None, reducerpred=None):
     if not (hasattr(classifier,"fit") and hasattr(classifier,"predict_proba")):
         raise Exception("classifier should be a sklearn classifier with the predict_proba method.")
 
-    if isinstance(data,numpy.ndarray):
+    if isinstance(data,np.ndarray):
         if reducerpred is not None and reducerdata is not None:
             raise Exception("unable to reduce both data and predictions")
     
@@ -269,13 +276,13 @@ def predict_proba(data, classifier, reducerdata=None, reducerpred=None):
         return pred
     else:
         if reducerpred == "mean":
-            pred = reduceArray(pred,data,numpy.mean)
+            pred = reduceArray(pred,data,np.mean)
         elif reducerpred == "max":
             pred = reduceArray(pred,data,max)            
         elif reducerpred == "min":
             pred = reduceArray(pred,data,min)            
         elif reducerpred == "median":
-            pred = reduceArray(pred,data,numpy.median)            
+            pred = reduceArray(pred,data,np.median)            
         elif reducerpred == "mode":
             pred = reduceArray(pred,data,lambda x: scipy.stats.mode(x)[0][0])
         elif isinstance(reducerpred, collections.Callable):
@@ -313,11 +320,11 @@ def createdata(data, reducer=None):
     >>> X = skwrap.createdata(data)
     '''    
     
-    if not isinstance(data,numpy.ndarray):
+    if not isinstance(data,np.ndarray):
         if not isinstance(data, list):
             raise Exception("data is not a list.")
             
-        if not all([isinstance(x,numpy.ndarray) for x in data]):
+        if not all([isinstance(x,np.ndarray) for x in data]):
             raise Exception("data contains non numpy.array elements.")
         
         if not all([x.shape[1] == data[0].shape[1] for x in data]):
@@ -328,25 +335,25 @@ def createdata(data, reducer=None):
         
         if reducer is not None:
             if reducer == "concat":
-                X = numpy.concatenate([numpy.reshape(x, (1,x.size)) for x in data])
+                X = np.concatenate([np.reshape(x, (1,x.size)) for x in data])
             elif reducer == "mean":
-                X = reduceArray(numpy.concatenate(data),data,numpy.mean)
+                X = reduceArray(np.concatenate(data),data,np.mean)
             elif reducer == "max":
-                X = reduceArray(numpy.concatenate(data),data,max)            
+                X = reduceArray(np.concatenate(data),data,max)            
             elif reducer == "min":
-                X = reduceArray(numpy.concatenate(data),data,min)            
+                X = reduceArray(np.concatenate(data),data,min)            
             elif reducer == "median":
-                X = reduceArray(numpy.concatenate(data),data,numpy.median)            
+                X = reduceArray(np.concatenate(data),data,np.median)            
             elif reducer == "mode":
-                X = reduceArray(numpy.concatenate(data),data,lambda x: scipy.stats.mode(x)[0][0])
+                X = reduceArray(np.concatenate(data),data,lambda x: scipy.stats.mode(x)[0][0])
             elif isinstance(reducer, collections.Callable):
-                X = reduceArray(numpy.concatenate(data),data,reducer)
+                X = reduceArray(np.concatenate(data),data,reducer)
             else:
                 raise Exception("Unkown reducer.")       
         else:
-            X = numpy.concatenate(data)
+            X = np.concatenate(data)
             
-    elif isinstance(data,numpy.ndarray):
+    elif isinstance(data,np.ndarray):
         X = data.copy()
     else:
         raise Exception("data should be a numpy array or list of numpy arrays.")
@@ -390,7 +397,7 @@ def createclasses(events, nSample = 1, mapping = None):
     '''
     
     if mapping is None: mapping=dict()
-    Y = numpy.zeros(len(events)*nSample)
+    Y = np.zeros(len(events)*nSample)
 
     if not isinstance(mapping,dict):
         raise Exception("mapping should be a dict.")
@@ -462,7 +469,7 @@ def reduceArray(pred, data, reducerfunc):
     if pred.shape[0] != sum([x.shape[0] for x in data]):
         raise Exception("Different number of samples in pred and data!")
     
-    out = numpy.zeros((len(data),pred.shape[1]))
+    out = np.zeros((len(data),pred.shape[1]))
     
     start = 0;
     for i in range(0,len(data)):
