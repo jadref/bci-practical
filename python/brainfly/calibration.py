@@ -78,6 +78,7 @@ while True:
             pygame.display.flip()
             while not any(hasattr(e, 'key') and e.type == KEYDOWN for e in pygame.event.get()):
                 time.sleep(0.1)
+            curtime = time.time()
         last_swap = curtime
         if i == len(sides):
             bufhelp.sendEvent('stimulus.training', 'end')
