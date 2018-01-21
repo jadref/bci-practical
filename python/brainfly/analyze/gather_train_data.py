@@ -2,7 +2,7 @@
 import sys
 import pickle
 
-sys.path.append('../../signalProc/')
+sys.path.append('../signalProc/')
 import bufhelp
 import h5py
 
