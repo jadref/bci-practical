@@ -135,7 +135,8 @@ while True:
 
     if curtime - last_pred_time > PREDICTION_TIME:
         last_pred_time = curtime
-        events = bufhelp.buffer_newevents('classify.prediction', timeout_ms=0.01)
+        bufhelp.sendEvent('experiment.predict', 1)
+        events = bufhelp.buffer_newevents('classifier.prediction', timeout_ms=0.01)
         for event in events:
             print(f'Got prediction event: {event.value}')
             controller.move(event.value[0])
