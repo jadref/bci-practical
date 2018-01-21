@@ -4,7 +4,7 @@ import sys
 import os
 import numpy as np
 
-sys.path.append('../../signalProc/')
+sys.path.append('../signalProc/')
 
 import bufhelp
 import preproc
@@ -34,6 +34,8 @@ data = preproc.spectralfilter(data, (5, 6, 31, 32), hdr.fSample)
 # 6 : bad-trial removal
 data, events, bad_trials = preproc.badtrialremoval(data, events)
 print(f'Removed trials: {bad_trials}')
+with open('processed_data.pkl', 'wb') as f:
+    pickle.dump({'X': data, 'events': events}, f)
 # 7: train classifier, default is a linear-least-squares-classifier
 import linear
 # mapping = {('stimulus.target', 0): 0, ('stimulus.target', 1): 1}
@@ -41,4 +43,5 @@ classifier = linear.fit(data, events)  # ,mapping)
 
 # save the trained classifer
 print('Saving clsfr to : %s' % (cname + '.pk'))
-pickle.dump({'classifier': classifier}, open(cname + '.pk', 'wb'))
+pickle.dump({'classifier': classifier,
+             'bad_channels': bad_channels}, open(cname + '.pk', 'wb'))
