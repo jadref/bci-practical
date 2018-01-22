@@ -106,7 +106,7 @@ def fit(data, events, classifier, mapping=dict(), params = None, folds = 5, shuf
         classifier.fit(X)
     else:
         # Use leave-one-out to get an estimate of the accuracy
-        k_fold = sklearn.model_selection.KFold(X.shape[0]-1)
+        k_fold = sklearn.model_selection.KFold(X.shape[0])
         predictions = np.empty(len(X))
         for train_idx, test_idx in k_fold.split(X, Y):
             clf = classifier.fit(X[train_idx],Y[train_idx])
