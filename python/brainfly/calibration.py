@@ -48,7 +48,7 @@ keys = defaultdict(bool)
 
 lasttime = last_swap = last_jump = stim_end_time = time.time()
 in_epoch = False
-sides = [''] + ['L', 'R']*20
+sides = [''] + np.random.permutation(['L', 'R']*20).tolist()
 left = Ellipse([0.1, 0.5], [0.2, 0.15], text='LH')
 right = Ellipse([0.9, 0.5], [0.2, 0.15], text='RH')
 middle = Ellipse([0.5, 0.5], [0.1, 0.1])
