@@ -103,7 +103,7 @@ score = n_shots = n_deaths = n_hits = 0
 rect = screen.get_rect()
 ship = ShipSprite()
 ship_group = pygame.sprite.RenderPlain(ship)
-controller = PlayerController(alpha=0.5*PREDICTION_TIME)
+controller = PlayerController()
 enemy_group = pygame.sprite.RenderPlain()
 bullet_group = pygame.sprite.RenderPlain()
 last_enemy_spawned = -ENEMY_SPAWN_TIME
