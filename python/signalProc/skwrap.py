@@ -106,12 +106,15 @@ def fit(data, events, classifier, mapping=dict(), params = None, folds = 5, shuf
         classifier.fit(X)
     else:
         # Use leave-one-out to get an estimate of the accuracy
-        k_fold = sklearn.model_selection.KFold(X.shape[0])
+        np.random.seed(42)
+        k_fold = sklearn.model_selection.KFold(X.shape[0], random_state=42)
         predictions = np.empty(len(X))
         for train_idx, test_idx in k_fold.split(X, Y):
+            clf = sklearn.linear_model.LogisticRegression(random_state=42)
             clf = classifier.fit(X[train_idx],Y[train_idx])
             predictions[test_idx] = clf.predict(X[test_idx])
         print(f'Leave-one-out Accuracy: {sklearn.metrics.accuracy_score(Y, predictions):.2f}')
+        classifier = sklearn.linear_model.LogisticRegression(random_state=42)
         classifier.fit(X, Y)
     
         
