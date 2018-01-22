@@ -17,8 +17,8 @@ BACKGROUND_COLOR = (42, 42, 42)
 
 ENEMY_MIN_SIZE = 0.05
 ENEMY_MAX_SIZE = 0.5
-ENEMY_ALIVE_TIME = 18
-ENEMY_SPAWN_TIME = ENEMY_ALIVE_TIME / 2
+ENEMY_ALIVE_TIME = 9
+ENEMY_SPAWN_TIME = ENEMY_ALIVE_TIME + 2
 ENEMY_SPEED = 1 / ENEMY_ALIVE_TIME
 PREDICTION_TIME = 0.1
 GAME_TIME = 90
@@ -105,7 +105,7 @@ rect = screen.get_rect()
 ship = ShipSprite()
 ship_group = pygame.sprite.RenderPlain(ship)
 ship_start_pos = 0.5
-controller = PlayerController(alpha=0.5 * PREDICTION_TIME)
+controller = PlayerController()
 enemy_group = pygame.sprite.RenderPlain()
 bullet_group = pygame.sprite.RenderPlain()
 last_enemy_spawned = -ENEMY_SPAWN_TIME
@@ -136,12 +136,13 @@ while True:
         last_enemy_spawned = curtime
 
     if curtime - last_pred_time > PREDICTION_TIME:
-        p = np.random.uniform(0, 1)
-        p += 0.1 if not max(enemy_group, key=lambda e: e.rect.bottom if hasattr(e, 'rect') else 0).left else -0.1
-        p = np.clip(p, 0, 1)
-        controller.move(p)
-        ship_start_pos = ship.position[0]
         last_pred_time = curtime
+        bufhelp.sendEvent('experiment.predict', 1)
+        events = bufhelp.buffer_newevents('classifier.prediction', timeout_ms=0.01)
+        for event in events:
+            print(f'Got prediction event: {event.value}')
+            controller.move(event.value[0])
+        ship_start_pos = ship.position[0]
 
     if curtime - last_bullet_spawned > 1:
         last_bullet_spawned = curtime
@@ -158,13 +159,14 @@ while True:
         if enemy.rect.bottom > screen_rect[1]:
             enemy.kill()
             n_deaths += 1
-            ship.position[0] = 0.5
+            ship.position[0] = controller.desired_position = 0.5
 
-    collisions = pygame.sprite.groupcollide(bullet_group, enemy_group, True, False)
+    collisions = pygame.sprite.groupcollide(bullet_group, enemy_group, True, True)
     for k, v in collisions.items():
         n_hits += 1
         score += int(round(10 * (screen_rect[1] - k.rect.center[1]) / screen_rect[1] + 1))
         ship.position[0] = controller.desired_position = 0.5
+        last_enemy_spawned = curtime - ENEMY_SPAWN_TIME
 
     lowest_enemy = max(e.rect.center[1] for e in enemy_group) if enemy_group else 0
     for bullet in bullet_group:
