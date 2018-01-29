@@ -19,8 +19,7 @@ if __name__ == '__main__':
     Cname, _, xy, _, _ = readCapInf('cap_tmsi_mobita_10ch.txt')
     data, events, hdr = data['X'], data['events'], data['hdr']
     X = np.array(data)
-    freqs = np.linspace(0, hdr.fSample/2, X.shape[1])
-    X, freqs = X[:, (MIN_FREQ <= freqs) & (freqs <= MAX_FREQ)], freqs[(MIN_FREQ <= freqs) & (freqs <= MAX_FREQ)]
+    freqs = np.linspace(5, 32, X.shape[1])
     y = np.concatenate([e.value for e in events])
     mean_left = X[y==0].mean(axis=0)
     mean_right = X[y==1].mean(axis=0)

@@ -116,7 +116,9 @@ def fit(data, events, classifier, mapping=dict(), params = None, folds = 5, shuf
         print(f'Leave-one-out Accuracy: {sklearn.metrics.accuracy_score(Y, predictions):.2f}')
         classifier = sklearn.linear_model.LogisticRegression(random_state=42)
         classifier.fit(X, Y)
-    
+        print(f'Training set accuracy: {classifier.score(X, Y)}')
+    return classifier
+
         
 def predict(data, classifier, mapping = None, reducerdata=None, reducerpred=None):
     '''Returns a prediction for each datapoint in data.
