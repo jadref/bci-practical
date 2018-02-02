@@ -9,7 +9,7 @@ import pygame
 from pygame.locals import *
 
 from util import intlist, lerp
-from controller import PlayerController
+from controller import PlayerController, ProbablisticConroller
 
 RESOLUTION = (960, 600)
 BACKGROUND_COLOR = (42, 42, 42)
@@ -103,7 +103,8 @@ score = n_shots = n_deaths = n_hits = 0
 rect = screen.get_rect()
 ship = ShipSprite()
 ship_group = pygame.sprite.RenderPlain(ship)
-controller = PlayerController()
+controller = ProbablisticConroller(alpha=0.5*PREDICTION_TIME)
+# controller = PlayerController()
 enemy_group = pygame.sprite.RenderPlain()
 bullet_group = pygame.sprite.RenderPlain()
 last_enemy_spawned = -ENEMY_SPAWN_TIME
@@ -133,13 +134,21 @@ while True:
         left = not left
         last_enemy_spawned = curtime
 
-    if curtime - last_pred_time > PREDICTION_TIME:
+    if curtime - last_pred_time > PREDICTION_TIME and isinstance(controller, PlayerController):
         last_pred_time = curtime
         bufhelp.sendEvent('experiment.predict', 1)
         events = bufhelp.buffer_newevents('classifier.prediction', timeout_ms=0.01)
         for event in events:
             print(f'Got prediction event: {event.value}')
             controller.move(event.value[0])
+        ship_start_pos = ship.position[0]
+
+    if curtime - last_pred_time > PREDICTION_TIME and isinstance(controller, ProbablisticConroller):
+        last_pred_time = curtime
+        if len(enemy_group) > 0:
+            lowest_left = max(enemy_group, key=lambda e: e.rect.bottom if hasattr(e, 'rect') else 0).left
+        controller.target_position = -1 if lowest_left else 1
+        controller.move(0)
         ship_start_pos = ship.position[0]
 
     if curtime - last_bullet_spawned > 1:
