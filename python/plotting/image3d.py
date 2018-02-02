@@ -131,20 +131,27 @@ def image3d(X,dim=0,plotpos=None,xvals=None,xlabel=None,yvals=None,ylabel=None,z
             if xticks is None :
                 plt.plot(Xpi,*args)
             else:
-                plt.plot(xticks,Xpi,*args)
+                for x, l in zip(Xpi.T, zlabel):
+                    plt.plot(xticks,x,*args, label=l)
         elif disptype=='image':
             if xticks is None or linenms is None :
                 plt.imshow(Xpi,*args)
             else:
                 plt.imshow(xticks,linenms,Xpi,*args)
 
+        ax.set_yticks([])
         if not titlepi is None:
             ax.set_title(titlepi,position=(.5,.4))
         if not xlab is None:
             ax.set_xlabel(xlab)
+            ax.set_ylabel(ylabel)
         if not showticklabs[pi]:
-            ax.xaxis.set_visible(False)
-            ax.yaxis.set_visible(False)
+            # ax.xaxis.set_visible(False)
+            # ax.yaxis.set_visible(False)
+            ax.set_xlabel('')
+            ax.set_ylabel('')
+        else:
+            ax.legend()
             
     return (h,fig)
 

@@ -1,3 +1,8 @@
+"""
+Listens for stimulus.target events until it sees 
+the (stimulus.training, end) event. Then saves all data in a pickle.
+"""
+
 # Imports
 import sys
 import pickle
