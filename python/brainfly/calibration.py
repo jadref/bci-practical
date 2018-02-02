@@ -1,3 +1,6 @@
+"""
+Present the stimuli for the calibration phase
+"""
 from collections import defaultdict
 import sys
 import time
@@ -11,6 +14,7 @@ from pygame.locals import *
 import bufhelp
 from util import intlist, lerp
 
+
 RESOLUTION = (960, 600)
 ELLIPSIS = np.array([0.2, 0.15])
 BACKGROUND_COLOR = (42, 42, 42)
@@ -21,7 +25,7 @@ PAUSE_TIME = 16
 
 
 class Ellipse:
-
+    """An ellipse containing text"""
     def __init__(self, position, size, color=(100, 100, 100), text=''):
         self.position = np.array(position)
         self.size = np.array(size) * screen_rect[1]
@@ -36,7 +40,7 @@ class Ellipse:
         text_x, text_y = intlist(self.position*screen_rect)
         screen.blit(text, [text_x - text.get_rect().width//2, text_y - text.get_rect().height//2])
 
-
+# Setup up the game
 screen = pygame.display.set_mode(RESOLUTION, DOUBLEBUF | NOFRAME)
 pygame.init()
 screen_rect = screen.get_rect()
@@ -48,19 +52,22 @@ keys = defaultdict(bool)
 
 lasttime = last_swap = last_jump = stim_end_time = time.time()
 in_epoch = False
-sides = [''] + np.random.permutation(['L', 'R']*20).tolist()
+sides = [''] + ['L', 'R']*20
 left = Ellipse([0.1, 0.5], [0.2, 0.15], text='LH')
 right = Ellipse([0.9, 0.5], [0.2, 0.15], text='RH')
 middle = Ellipse([0.5, 0.5], [0.1, 0.1])
 i = 0
-bufhelp.sendEvent('stimulus.training', 'start')
 middle_offset_goal = middle_start_pos = 0
+
+bufhelp.sendEvent('stimulus.training', 'start')
+# The game loop
 while True:
-    clock.tick(60)
+    clock.tick(60) # 60 FPS
     curtime = time.time()
     deltatime = curtime - lasttime
     lasttime = curtime
 
+    # Record which keys are pressed and check if the game should exit
     for event in pygame.event.get():
         if not hasattr(event, 'key'): continue
         down = event.type == KEYDOWN
@@ -69,8 +76,9 @@ while True:
             sys.exit()
 
     if not in_epoch and curtime - stim_end_time >= BETWEEN_DURATION:
+        # Setup the next epoch
         i += 1
-        if i % PAUSE_TIME == 1:
+        if i % PAUSE_TIME == 1:  # Take a break once in a while
             pause_text = font.render('Break time! Press any key when you are ready to continue', True, [255, 255, 255])
             center_x, center_y = screen.get_rect().center
             text_width, text_height = pause_text.get_rect().size
@@ -80,7 +88,9 @@ while True:
                 time.sleep(0.1)
             curtime = time.time()
         last_swap = curtime
+
         if i == len(sides):
+            # The calibration phase is done
             bufhelp.sendEvent('stimulus.training', 'end')
             sys.exit()
         if sides[i] == 'L':
@@ -97,6 +107,7 @@ while True:
         in_epoch = True
 
     if in_epoch and curtime - last_swap >= EPOCH_DURATION:
+        # Epoch is done, go back to neutral state
         middle.text = ''
         left.color = right.color = (100, 100, 100)
         middle.color = (255, 105, 97)
@@ -105,6 +116,7 @@ while True:
     screen.fill(BACKGROUND_COLOR)
 
     if curtime - last_jump >= JUMP_DURATION:
+        # The middle ellipse moves to generate some noise
         last_jump = curtime
         middle_offset_goal = np.random.normal(0, 0.005, 2)
         middle_start_pos = middle.offset

@@ -1,17 +1,23 @@
+"""
+Continuous feedback phase
+
+Closely resembles the real game, but a lot slower
+The player gets reset whenever the next enemy appears
+"""
 from collections import defaultdict
 import sys
-
-sys.path.append('../signalProc')
-import bufhelp
 import time
 
 import numpy as np
 import pygame
 from pygame.locals import *
 
-from util import intlist, lerp
+sys.path.append('../signalProc')
+import bufhelp
 from controller import PlayerController, ProbablisticConroller
+from util import intlist, lerp
 
+# Constants for game behaviour
 RESOLUTION = (960, 600)
 BACKGROUND_COLOR = (42, 42, 42)
 
@@ -26,15 +32,9 @@ GAME_TIME = 90
 PLAYER_SPEED = 0.3
 BULLET_SPEED = 0.8
 
-screen = pygame.display.set_mode(RESOLUTION, DOUBLEBUF | NOFRAME)
-screen_rect = screen.get_rect()
-screen_rect = np.array([screen_rect.w, screen_rect.h])
-clock = pygame.time.Clock()
-keys = defaultdict(bool)
-bufhelp.connect()
-
-
+# Classes for all the entities in the game
 class Bullet(pygame.sprite.Sprite):
+    """A bullet is a square that moves up every iteration"""
     def __init__(self, x):
         super().__init__()
         self.image = pygame.Surface(intlist(screen_rect[1] * np.array([0.03, 0.03])))
@@ -48,6 +48,10 @@ class Bullet(pygame.sprite.Sprite):
 
 
 class EnemySprite(pygame.sprite.Sprite):
+    """
+    Enemies spawn either on the left or the right side of the screen
+    They slowly get larger as they move to the bottom
+    """
     GROWTH_RATE = (ENEMY_MAX_SIZE / ENEMY_MIN_SIZE) ** (1 / ENEMY_ALIVE_TIME)
 
     def __init__(self, left=True):
@@ -68,15 +72,13 @@ class EnemySprite(pygame.sprite.Sprite):
         time_elapsed = time.time() - self.spawntime
         scale = self.scale * self.GROWTH_RATE ** time_elapsed
         self.image = pygame.transform.scale(self.original_image, intlist(scale * screen_rect))
-        # self.position[0] = ENEMY_MIN_SIZE / 2 * self.GROWTH_RATE**time_elapsed
-        # if not self.left:
-        #     self.position[0] = 1 - self.position[0]
         self.rect = self.image.get_rect()
         self.rect.center = intlist(self.position * screen_rect)
         self.rect.bottom = intlist(self.position * screen_rect)[1]
 
 
 class ShipSprite(pygame.sprite.Sprite):
+    """The player"""
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load('ship.png')
@@ -94,13 +96,21 @@ class ShipSprite(pygame.sprite.Sprite):
 
 
 def draw_enemies(enemies, screen):
+    """Draw the enemies and the red line behind them"""
     for enemy in enemies:
         pygame.draw.line(screen, [155, 10, 10], [0, enemy.rect.center[1]], [screen_rect[0], enemy.rect.center[1]], 3)
     enemies.draw(screen)
 
 
-score = n_shots = n_deaths = n_hits = 0
+# Set up the game
+screen = pygame.display.set_mode(RESOLUTION, DOUBLEBUF | NOFRAME)
+screen_rect = screen.get_rect()
+screen_rect = np.array([screen_rect.w, screen_rect.h])
+clock = pygame.time.Clock()
+keys = defaultdict(bool)
+bufhelp.connect()
 
+score = n_shots = n_deaths = n_hits = 0
 rect = screen.get_rect()
 ship = ShipSprite()
 ship_group = pygame.sprite.RenderPlain(ship)
@@ -114,12 +124,16 @@ left = True
 pygame.init()
 font = pygame.font.Font(pygame.font.get_default_font(), 16)
 lasttime = last_bullet_spawned = game_start_time = time.time()
+
 bufhelp.sendEvent('experiment.im', 'start')
+# Main game loop
 while True:
-    clock.tick(60)
+    clock.tick(60)  # 60 FPS
     curtime = time.time()
     deltatime = curtime - lasttime
     lasttime = curtime
+
+    # Record which keys are pressed and check if the game should exit
     for event in pygame.event.get():
         if not hasattr(event, 'key'): continue
         down = event.type == KEYDOWN
@@ -136,6 +150,7 @@ while True:
         last_enemy_spawned = curtime
 
     if curtime - last_pred_time > PREDICTION_TIME:
+        # Ask for a new prediction and process the predictions received
         last_pred_time = curtime
         bufhelp.sendEvent('experiment.predict', 1)
         events = bufhelp.buffer_newevents('classifier.prediction', timeout_ms=0.01)
@@ -145,22 +160,26 @@ while True:
         ship_start_pos = ship.position[0]
 
     if curtime - last_bullet_spawned > 1:
+        # Spawn a new bullet
         last_bullet_spawned = curtime
         n_shots += 1
         bullet_group.add(Bullet(ship.position[0]))
+
+    # Update all the entities
     enemy_group.update(deltatime)
     ship_group.update(deltatime, keys)
     bullet_group.update(deltatime)
 
     ship.position[0] = lerp(ship_start_pos, controller.desired_position, (curtime - last_pred_time) / PREDICTION_TIME)
 
-
+    # Check if any enemies have reached the bottom of the screen
     for enemy in enemy_group:
         if enemy.rect.bottom > screen_rect[1]:
             enemy.kill()
             n_deaths += 1
             ship.position[0] = controller.desired_position = 0.5
 
+    # Check if an enemy has collided with a bullet
     collisions = pygame.sprite.groupcollide(bullet_group, enemy_group, True, True)
     for k, v in collisions.items():
         n_hits += 1
@@ -168,6 +187,7 @@ while True:
         ship.position[0] = controller.desired_position = 0.5
         last_enemy_spawned = curtime - ENEMY_SPAWN_TIME
 
+    # Check if a bullet has gone beyond the lowest enemy
     lowest_enemy = max(e.rect.center[1] for e in enemy_group) if enemy_group else 0
     for bullet in bullet_group:
         if bullet.rect.top <= lowest_enemy:
@@ -179,10 +199,13 @@ while True:
         True, [255, 255, 255])
     screen.blit(score_text, (0, 0))
 
+    # Draw everything
     ship_group.draw(screen)
     bullet_group.draw(screen)
     draw_enemies(enemy_group, screen)
     pygame.display.flip()
+
     if game_start_time + GAME_TIME < curtime:
+        # The game is done
         bufhelp.sendEvent('experiment.im', 'end')
         sys.exit()
