@@ -10,7 +10,7 @@ import pygame
 from pygame.locals import *
 
 from util import intlist, lerp
-from controller import PlayerController
+from controller import PlayerController, ProbablisticConroller
 
 RESOLUTION = (960, 600)
 BACKGROUND_COLOR = (42, 42, 42)
