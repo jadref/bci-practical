@@ -11,6 +11,7 @@ import numpy as np
 sys.path.append('../signalProc/')
 
 import bufhelp
+import util
 import preproc
 import pickle
 
@@ -46,7 +47,7 @@ with open('processed_data.pkl', 'wb') as f:
 # Reduce the number of features per channel
 freqs = np.linspace(0, hdr.fSample/2, len(data[0]))
 data = [d[(5 <= freqs) & (freqs <= 32)] for d in data]
-data = [subsample_frequencies(d, 4) for d in data]
+data = [util.subsample_frequencies(d, 4) for d in data]
 
 # 7: train classifier
 import linear
