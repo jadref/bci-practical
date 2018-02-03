@@ -11,7 +11,7 @@
 - matplotlib
 - scikit-learn
 
-## Usage
+## User's guide
 First, you should calibrate the BCI. This can be done by running the following commands at the same time:
 ```
 python analyze/gather_train_data.py
@@ -38,7 +38,7 @@ python analyze/feedback.py
 python brainfly.py
 ```
 
-## Documentation
+## Programmer's guide
 This is an overview of the files and their purposes. More detailed comments can be found in the code.
 ### Stimuli and related files
 - `brainfly.py`: Brainfly game. Constants are derived best as possible from the MATLAB version. Enemies appear left or right at random. Run with `--simulation` option to simulate the BCI. Parameters which can be tweaked can be found at the top of the file, (e.g., `ENEMY_ALIVE_TIME`, `GAME_TIME`, `PLAYER_SPEED`).
